@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -9,14 +8,11 @@ import shutil
 
 app = FastAPI()
 
-# Allow frontend (Vite dev server) to call this API
-origins = [
-    "https://senderplus.netlify.app/",
-]
-
+# CORS: allow frontend (Netlify) to call API
+# For MVP/demo we keep this wide open. You can lock it down later.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # allow all origins for now
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,7 +32,7 @@ STATUSES = [
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Serve uploaded files (optional, useful later for showing images)
+# Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
@@ -69,7 +65,7 @@ async def submit_package(
         file_path = os.path.join(UPLOAD_DIR, filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(photo.file, buffer)
-        # URL that frontend can use (http://localhost:8000/uploads/filename)
+        # URL that frontend can use (https://.../uploads/filename)
         photo_url = f"/uploads/{filename}"
 
     packages[tracking_id] = {
@@ -104,6 +100,7 @@ def track_package(tracking_id: str):
         raise HTTPException(status_code=404, detail="Package not found")
     return pkg
 
+
 @app.post("/advance-status/{tracking_id}")
 def advance_status(tracking_id: str):
     pkg = packages.get(tracking_id)
@@ -114,11 +111,9 @@ def advance_status(tracking_id: str):
     try:
         idx = STATUSES.index(current_status)
     except ValueError:
-        # If somehow status isn't in STATUSES, reset to first
         idx = -1
 
     if idx < len(STATUSES) - 1:
         pkg["status"] = STATUSES[idx + 1]
-    # If it's already at the last status, keep it there
 
     return pkg
