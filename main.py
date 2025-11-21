@@ -10,9 +10,13 @@ import shutil
 app = FastAPI()
 
 # Allow frontend (Vite dev server) to call this API
+origins = [
+    "https://senderplus.netlify.app/",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for dev; later you can restrict to your domain
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
