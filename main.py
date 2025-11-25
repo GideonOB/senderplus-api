@@ -29,8 +29,18 @@ STATUSES = [
     "Package delivered to recipient",
 ]
 
-UPLOAD_DIR = "uploads"
+import tempfile
+
+# Use a safe temp directory (works well on Render and locally)
+BASE_UPLOAD_DIR = os.getenv("UPLOAD_DIR", None)
+
+if BASE_UPLOAD_DIR is None:
+    # default to system temp dir/uploads
+    BASE_UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "senderplus_uploads")
+
+UPLOAD_DIR = BASE_UPLOAD_DIR
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
